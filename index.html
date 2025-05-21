@@ -5,50 +5,63 @@
   <title>MM2 Report System</title>
   <style>
     body {
-      background: linear-gradient(145deg, #1e1e2f, #34354a);
-      font-family: 'Segoe UI', sans-serif;
-      color: white;
-      padding: 40px 20px;
       margin: 0;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
+      padding: 0;
+      font-family: 'Segoe UI', sans-serif;
+      background: #1e1e2f;
+      overflow: hidden;
+      color: white;
     }
 
-    h2 {
-      margin-bottom: 10px;
-      text-align: center;
+    canvas#bgCanvas {
+      position: fixed;
+      top: 0;
+      left: 0;
+      z-index: -1;
     }
 
     .form-container {
       background: rgba(255, 255, 255, 0.05);
       padding: 25px;
       border-radius: 15px;
-      width: 100%;
+      width: 90%;
       max-width: 400px;
       box-shadow: 0 0 20px rgba(0,0,0,0.3);
+      margin: 60px auto;
+    }
+
+    h2 {
+      text-align: center;
+      margin-bottom: 20px;
     }
 
     input, select {
       width: 100%;
-      padding: 10px;
+      padding: 12px;
       margin: 10px 0;
-      border: none;
+      border: 2px solid transparent;
       border-radius: 8px;
-      background: rgba(255,255,255,0.1);
-      color: white;
+      background: rgba(255,255,255,0.95);
+      color: black;
       font-size: 1rem;
+      transition: box-shadow 0.3s ease, border-color 0.3s ease;
+    }
+
+    input:focus, select:focus {
+      outline: none;
+      border-color: #4caf50;
+      box-shadow: 0 0 10px #4caf50, 0 0 20px #4caf50;
     }
 
     select {
       appearance: none;
       -webkit-appearance: none;
       -moz-appearance: none;
-      background-color: rgba(255, 255, 255, 0.1);
     }
 
     option {
-      background: #2e2e3e;
+      background-color: white;
+      color: black;
     }
 
     .send-btn {
@@ -99,27 +112,24 @@
   </style>
 </head>
 <body>
+  <canvas id="bgCanvas"></canvas>
 
   <div class="form-container">
     <h2>Reporter un joueur</h2>
     <input type="text" id="pseudo" placeholder="Pseudo du joueur">
-
     <label for="type">Type de joueur</label>
     <select id="type">
       <option value="">-- Sélectionner un type --</option>
       <option value="Exploiter">Exploiter</option>
       <option value="Anti Teamer">Anti Teamer</option>
       <option value="Speed Glitcher">Speed Glitcher</option>
-      <!-- tu peux en rajouter ici -->
     </select>
-
     <label for="elite">Élite ?</label>
     <select id="elite">
       <option value="">-- Sélectionner --</option>
       <option value="Oui">Oui</option>
       <option value="Non">Non</option>
     </select>
-
     <input type="number" id="level" placeholder="Niveau du joueur">
     <input type="number" id="kills" placeholder="Kills en Murderer">
     <input type="number" id="sheriffWins" placeholder="Victoires en Shérif">
@@ -134,7 +144,6 @@
       const popup = document.getElementById('popup');
       popup.textContent = message;
       popup.className = 'popup show ' + (isSuccess ? 'success' : 'error');
-
       setTimeout(() => {
         popup.classList.remove("show");
       }, 3000);
@@ -142,6 +151,16 @@
 
     function isNumeric(value) {
       return !isNaN(parseFloat(value)) && isFinite(value);
+    }
+
+    function clearFields() {
+      document.getElementById('pseudo').value = "";
+      document.getElementById('type').value = "";
+      document.getElementById('elite').value = "";
+      document.getElementById('level').value = "";
+      document.getElementById('kills').value = "";
+      document.getElementById('sheriffWins').value = "";
+      document.getElementById('innocentWins').value = "";
     }
 
     async function sendToWebhook() {
@@ -187,6 +206,7 @@
 
         if (res.ok) {
           showPopup("✅ Rapport envoyé !");
+          clearFields();
         } else {
           showPopup("❌ Erreur lors de l'envoi au webhook.", false);
         }
@@ -195,6 +215,41 @@
         showPopup("❌ Erreur réseau.", false);
       }
     }
+
+    // Fond animé avec points
+    const canvas = document.getElementById('bgCanvas');
+    const ctx = canvas.getContext('2d');
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+
+    const dots = Array.from({ length: 100 }, () => ({
+      x: Math.random() * canvas.width,
+      y: Math.random() * canvas.height,
+      r: Math.random() * 2 + 1,
+      dx: Math.random() * 0.5 - 0.25,
+      dy: Math.random() * 0.5 - 0.25
+    }));
+
+    function animate() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      for (let dot of dots) {
+        ctx.beginPath();
+        ctx.arc(dot.x, dot.y, dot.r, 0, Math.PI * 2);
+        ctx.fillStyle = 'white';
+        ctx.fill();
+        dot.x += dot.dx;
+        dot.y += dot.dy;
+        if (dot.x < 0 || dot.x > canvas.width) dot.dx *= -1;
+        if (dot.y < 0 || dot.y > canvas.height) dot.dy *= -1;
+      }
+      requestAnimationFrame(animate);
+    }
+
+    animate();
+    window.addEventListener("resize", () => {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+    });
   </script>
 </body>
 </html>
