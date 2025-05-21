@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <title>MM2 Report System</title>
+  <style>
+    body {
+      background: linear-gradient(145deg, #1e1e2f, #34354a);
+      font-family: 'Segoe UI', sans-serif;
+      color: white;
+      padding: 40px 20px;
+      margin: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    h2 {
+      margin-bottom: 10px;
+      text-align: center;
+    }
+
+    .form-container {
+      background: rgba(255, 255, 255, 0.05);
+      padding: 25px;
+      border-radius: 15px;
+      width: 100%;
+      max-width: 400px;
+      box-shadow: 0 0 20px rgba(0,0,0,0.3);
+    }
+
+    input, select {
+      width: 100%;
+      padding: 10px;
+      margin: 10px 0;
+      border: none;
+      border-radius: 8px;
+      background: rgba(255,255,255,0.1);
+      color: white;
+      font-size: 1rem;
+    }
+
+    select {
+      appearance: none;
+      -webkit-appearance: none;
+      -moz-appearance: none;
+      background-color: rgba(255, 255, 255, 0.1);
+    }
+
+    option {
+      background: #2e2e3e;
+    }
+
+    .send-btn {
+      width: 100%;
+      padding: 12px;
+      background-color: #4caf50;
+      color: white;
+      border: none;
+      border-radius: 10px;
+      font-size: 1rem;
+      cursor: pointer;
+      margin-top: 15px;
+    }
+
+    .send-btn:hover {
+      background-color: #43a047;
+    }
+
+    .popup {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%) scale(0);
+      background-color: #282a36;
+      color: white;
+      padding: 30px;
+      border-radius: 15px;
+      z-index: 1000;
+      box-shadow: 0 0 30px rgba(0, 0, 0, 0.5);
+      transition: transform 0.3s ease, background 0.3s ease;
+      text-align: center;
+      min-width: 250px;
+    }
+
+    .popup.show {
+      transform: translate(-50%, -50%) scale(1);
+    }
+
+    .popup.success {
+      background-color: #2ecc71;
+      box-shadow: 0 0 30px rgba(46, 204, 113, 0.5);
+    }
+
+    .popup.error {
+      background-color: #e74c3c;
+      box-shadow: 0 0 30px rgba(231, 76, 60, 0.5);
+    }
+  </style>
+</head>
+<body>
+
+  <div class="form-container">
+    <h2>Reporter un joueur</h2>
+    <input type="text" id="pseudo" placeholder="Pseudo du joueur">
+
+    <label for="type">Type de joueur</label>
+    <select id="type">
+      <option value="">-- Sélectionner un type --</option>
+      <option value="Exploiter">Exploiter</option>
+      <option value="Anti Teamer">Anti Teamer</option>
+      <option value="Speed Glitcher">Speed Glitcher</option>
+      <!-- tu peux en rajouter ici -->
+    </select>
+
+    <label for="elite">Élite ?</label>
+    <select id="elite">
+      <option value="">-- Sélectionner --</option>
+      <option value="Oui">Oui</option>
+      <option value="Non">Non</option>
+    </select>
+
+    <input type="number" id="level" placeholder="Niveau du joueur">
+    <input type="number" id="kills" placeholder="Kills en Murderer">
+    <input type="number" id="sheriffWins" placeholder="Victoires en Shérif">
+    <input type="number" id="innocentWins" placeholder="Victoires en Innocent">
+    <button class="send-btn" onclick="sendToWebhook()">Envoyer au webhook</button>
+  </div>
+
+  <div id="popup" class="popup"></div>
+
+  <script>
+    function showPopup(message, isSuccess = true) {
+      const popup = document.getElementById('popup');
+      popup.textContent = message;
+      popup.className = 'popup show ' + (isSuccess ? 'success' : 'error');
+
+      setTimeout(() => {
+        popup.classList.remove("show");
+      }, 3000);
+    }
+
+    function isNumeric(value) {
+      return !isNaN(parseFloat(value)) && isFinite(value);
+    }
+
+    async function sendToWebhook() {
+      const pseudo = document.getElementById('pseudo').value.trim();
+      const type = document.getElementById('type').value.trim();
+      const elite = document.getElementById('elite').value.trim();
+      const level = document.getElementById('level').value.trim();
+      const kills = document.getElementById('kills').value.trim();
+      const sheriffWins = document.getElementById('sheriffWins').value.trim();
+      const innocentWins = document.getElementById('innocentWins').value.trim();
+
+      if (!pseudo || !type || !elite || !isNumeric(level) || !isNumeric(kills) || !isNumeric(sheriffWins) || !isNumeric(innocentWins)) {
+        showPopup("❌ Remplis tous les champs correctement !", false);
+        return;
+      }
+
+      const webhookURL = "https://discord.com/api/webhooks/1374774291706417267/ATDa2h7iIu_CUb2H2pis_wXgKg4NghXI9dpSVM8OVkjtGkquHUthbzlsXYAFpvn2xFnh";
+
+      const message = {
+        username: "MM2 Reporter",
+        embeds: [{
+          title: "🚨 Joueur signalé",
+          color: 15158332,
+          fields: [
+            { name: "🎮 Pseudo", value: pseudo, inline: true },
+            { name: "📌 Type", value: type, inline: true },
+            { name: "💎 Élite", value: elite, inline: true },
+            { name: "📈 Niveau", value: level.toString(), inline: true },
+            { name: "🔪 Kills Murderer", value: kills.toString(), inline: true },
+            { name: "🛡️ Wins Shérif", value: sheriffWins.toString(), inline: true },
+            { name: "👻 Wins Innocent", value: innocentWins.toString(), inline: true }
+          ],
+          timestamp: new Date().toISOString()
+        }]
+      };
+
+      try {
+        const res = await fetch(webhookURL, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(message)
+        });
+
+        if (res.ok) {
+          showPopup("✅ Rapport envoyé !");
+        } else {
+          showPopup("❌ Erreur lors de l'envoi au webhook.", false);
+        }
+      } catch (err) {
+        console.error(err);
+        showPopup("❌ Erreur réseau.", false);
+      }
+    }
+  </script>
+</body>
+</html>
