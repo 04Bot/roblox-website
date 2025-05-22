@@ -4,76 +4,67 @@
   <meta charset="UTF-8">
   <title>MM2 Report System</title>
   <style>
-    body {
+    html, body {
       margin: 0;
       padding: 0;
-      font-family: 'Segoe UI', sans-serif;
-      background: #1e1e2f;
       overflow: hidden;
-      color: white;
+      height: 100%;
+      font-family: 'Segoe UI', sans-serif;
+      color: black;
     }
 
-    canvas#bgCanvas {
+    canvas#background {
       position: fixed;
       top: 0;
       left: 0;
-      z-index: -1;
+      z-index: -2;
+    }
+
+    .login-overlay, .form-container {
+      position: relative;
+      z-index: 1;
     }
 
     .form-container {
-      background: rgba(255, 255, 255, 0.05);
+      background: rgba(255, 255, 255, 0.85);
       padding: 25px;
       border-radius: 15px;
       width: 90%;
       max-width: 400px;
-      box-shadow: 0 0 20px rgba(0,0,0,0.3);
-      margin: 60px auto;
+      margin: 100px auto 0;
+      box-shadow: 0 0 25px rgba(0,0,0,0.3);
     }
 
     h2 {
       text-align: center;
-      margin-bottom: 20px;
     }
 
     input, select {
       width: 100%;
-      padding: 12px;
+      padding: 10px;
       margin: 10px 0;
-      border: 2px solid transparent;
       border-radius: 8px;
-      background: rgba(255,255,255,0.95);
-      color: black;
+      border: 2px solid transparent;
+      background: rgba(255,255,255,0.7);
       font-size: 1rem;
-      transition: box-shadow 0.3s ease, border-color 0.3s ease;
+      outline: none;
+      color: black;
+      transition: border 0.3s, box-shadow 0.3s;
     }
 
     input:focus, select:focus {
-      outline: none;
       border-color: #4caf50;
-      box-shadow: 0 0 10px #4caf50, 0 0 20px #4caf50;
-    }
-
-    select {
-      appearance: none;
-      -webkit-appearance: none;
-      -moz-appearance: none;
-    }
-
-    option {
-      background-color: white;
-      color: black;
+      box-shadow: 0 0 8px #4caf50;
     }
 
     .send-btn {
-      width: 100%;
-      padding: 12px;
       background-color: #4caf50;
       color: white;
+      padding: 12px;
       border: none;
       border-radius: 10px;
       font-size: 1rem;
       cursor: pointer;
-      margin-top: 15px;
     }
 
     .send-btn:hover {
@@ -87,169 +78,219 @@
       transform: translate(-50%, -50%) scale(0);
       background-color: #282a36;
       color: white;
-      padding: 30px;
-      border-radius: 15px;
+      padding: 20px;
+      border-radius: 10px;
       z-index: 1000;
       box-shadow: 0 0 30px rgba(0, 0, 0, 0.5);
-      transition: transform 0.3s ease, background 0.3s ease;
-      text-align: center;
+      transition: transform 0.3s ease;
       min-width: 250px;
+      text-align: center;
     }
 
     .popup.show {
       transform: translate(-50%, -50%) scale(1);
     }
 
-    .popup.success {
-      background-color: #2ecc71;
-      box-shadow: 0 0 30px rgba(46, 204, 113, 0.5);
+    .popup.success { background-color: #2ecc71; }
+    .popup.error { background-color: #e74c3c; }
+
+    .login-overlay {
+      position: fixed;
+      background: rgba(0, 0, 0, 0.85);
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
     }
 
-    .popup.error {
-      background-color: #e74c3c;
-      box-shadow: 0 0 30px rgba(231, 76, 60, 0.5);
+    .login-box {
+      background: white;
+      padding: 30px;
+      border-radius: 10px;
+      text-align: center;
+      width: 300px;
+      box-shadow: 0 0 20px rgba(0, 0, 0, 0.6);
+    }
+
+    .login-box input {
+      background: #f0f0f0;
+      color: black;
+    }
+
+    .username-display {
+      position: fixed;
+      top: 10px;
+      left: 15px;
+      color: white;
+      font-weight: bold;
+      text-shadow: 1px 1px 4px rgba(0, 0, 0, 0.7);
+      z-index: 2;
     }
   </style>
 </head>
 <body>
-  <canvas id="bgCanvas"></canvas>
 
-  <div class="form-container">
-    <h2>Reporter un joueur</h2>
-    <input type="text" id="pseudo" placeholder="Pseudo du joueur">
-    <label for="type">Type de joueur</label>
-    <select id="type">
-      <option value="">-- Sélectionner un type --</option>
-      <option value="Exploiter">Exploiter</option>
-      <option value="Anti Teamer">Anti Teamer</option>
-      <option value="Speed Glitcher">Speed Glitcher</option>
-    </select>
-    <label for="elite">Élite ?</label>
-    <select id="elite">
-      <option value="">-- Sélectionner --</option>
-      <option value="Oui">Oui</option>
-      <option value="Non">Non</option>
-    </select>
-    <input type="number" id="level" placeholder="Niveau du joueur">
-    <input type="number" id="kills" placeholder="Kills en Murderer">
-    <input type="number" id="sheriffWins" placeholder="Victoires en Shérif">
-    <input type="number" id="innocentWins" placeholder="Victoires en Innocent">
-    <button class="send-btn" onclick="sendToWebhook()">Envoyer au webhook</button>
+<canvas id="background"></canvas>
+
+<div class="username-display" id="usernameDisplay" style="display: none;"></div>
+
+<div class="login-overlay" id="loginOverlay">
+  <div class="login-box">
+    <h3>Connexion</h3>
+    <input type="text" id="loginUser" placeholder="Nom d'utilisateur" />
+    <input type="password" id="loginPass" placeholder="Code à 4 chiffres" />
+    <button onclick="handleLogin()">Se connecter</button>
   </div>
+</div>
 
-  <div id="popup" class="popup"></div>
+<div class="form-container" id="reportForm" style="display: none;">
+  <h2>Reporter un joueur</h2>
+  <input type="text" id="pseudo" placeholder="Pseudo du joueur" />
+  <label for="type">Type de joueur</label>
+  <select id="type">
+    <option value="">-- Sélectionner un type --</option>
+    <option value="Exploiter">Exploiter</option>
+    <option value="Anti Teamer">Anti Teamer</option>
+    <option value="Speed Glitcher">Speed Glitcher</option>
+  </select>
 
-  <script>
-    function showPopup(message, isSuccess = true) {
-      const popup = document.getElementById('popup');
-      popup.textContent = message;
-      popup.className = 'popup show ' + (isSuccess ? 'success' : 'error');
-      setTimeout(() => {
-        popup.classList.remove("show");
-      }, 3000);
+  <label for="elite">Élite ?</label>
+  <select id="elite">
+    <option value="">-- Sélectionner --</option>
+    <option value="Oui">Oui</option>
+    <option value="Non">Non</option>
+  </select>
+
+  <input type="number" id="level" placeholder="Niveau du joueur" />
+  <input type="number" id="kills" placeholder="Kills en Murderer" />
+  <input type="number" id="sheriffWins" placeholder="Victoires en Shérif" />
+  <input type="number" id="innocentWins" placeholder="Victoires en Innocent" />
+  <button class="send-btn" onclick="sendToWebhook()">Envoyer au webhook</button>
+</div>
+
+<div id="popup" class="popup"></div>
+
+<script>
+  const users = {
+    "robin68012": "4792",
+    "jr_myR4": "8235",
+    "vellrox_yt": "1379"
+  };
+
+  let currentUser = null;
+
+  function handleLogin() {
+    const user = document.getElementById("loginUser").value.trim();
+    const pass = document.getElementById("loginPass").value.trim();
+    if (users[user] && users[user] === pass) {
+      document.getElementById("loginOverlay").style.display = "none";
+      document.getElementById("reportForm").style.display = "block";
+      document.getElementById("usernameDisplay").style.display = "block";
+      document.getElementById("usernameDisplay").textContent = user;
+      currentUser = user;
+    } else {
+      alert("Identifiants incorrects.");
+    }
+  }
+
+  function showPopup(msg, success = true) {
+    const popup = document.getElementById("popup");
+    popup.textContent = msg;
+    popup.className = `popup show ${success ? "success" : "error"}`;
+    setTimeout(() => popup.classList.remove("show"), 3000);
+  }
+
+  async function sendToWebhook() {
+    const pseudo = document.getElementById('pseudo').value.trim();
+    const type = document.getElementById('type').value.trim();
+    const elite = document.getElementById('elite').value.trim();
+    const level = document.getElementById('level').value.trim();
+    const kills = document.getElementById('kills').value.trim();
+    const sheriffWins = document.getElementById('sheriffWins').value.trim();
+    const innocentWins = document.getElementById('innocentWins').value.trim();
+
+    if (!pseudo || !type || !elite || !level || !kills || !sheriffWins || !innocentWins) {
+      showPopup("❌ Remplis tous les champs correctement !", false);
+      return;
     }
 
-    function isNumeric(value) {
-      return !isNaN(parseFloat(value)) && isFinite(value);
+    const message = {
+      username: "MM2 Reporter",
+      embeds: [{
+        title: "🚨 Joueur signalé",
+        color: 15158332,
+        fields: [
+          { name: "👤 Reporté par", value: currentUser, inline: true },
+          { name: "🎮 Pseudo", value: pseudo, inline: true },
+          { name: "📌 Type", value: type, inline: true },
+          { name: "💎 Élite", value: elite, inline: true },
+          { name: "📈 Niveau", value: level, inline: true },
+          { name: "🔪 Kills Murderer", value: kills, inline: true },
+          { name: "🛡️ Wins Shérif", value: sheriffWins, inline: true },
+          { name: "👻 Wins Innocent", value: innocentWins, inline: true }
+        ],
+        timestamp: new Date().toISOString()
+      }]
+    };
+
+    try {
+      await fetch("https://discord.com/api/webhooks/1374774291706417267/ATDa2h7iIu_CUb2H2pis_wXgKg4NghXI9dpSVM8OVkjtGkquHUthbzlsXYAFpvn2xFnh", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(message)
+      });
+      showPopup("✅ Rapport envoyé !");
+      document.querySelectorAll('#reportForm input, #reportForm select').forEach(el => el.value = "");
+    } catch (e) {
+      showPopup("❌ Erreur d'envoi.", false);
     }
+  }
 
-    function clearFields() {
-      document.getElementById('pseudo').value = "";
-      document.getElementById('type').value = "";
-      document.getElementById('elite').value = "";
-      document.getElementById('level').value = "";
-      document.getElementById('kills').value = "";
-      document.getElementById('sheriffWins').value = "";
-      document.getElementById('innocentWins').value = "";
-    }
+  // Fond animé fluide (ancien style)
+  const canvas = document.getElementById('background');
+  const ctx = canvas.getContext('2d');
+  let width = canvas.width = window.innerWidth;
+  let height = canvas.height = window.innerHeight;
 
-    async function sendToWebhook() {
-      const pseudo = document.getElementById('pseudo').value.trim();
-      const type = document.getElementById('type').value.trim();
-      const elite = document.getElementById('elite').value.trim();
-      const level = document.getElementById('level').value.trim();
-      const kills = document.getElementById('kills').value.trim();
-      const sheriffWins = document.getElementById('sheriffWins').value.trim();
-      const innocentWins = document.getElementById('innocentWins').value.trim();
+  const colors = ['#2196f3', '#00bcd4', '#3f51b5', '#9c27b0'];
+  const circles = Array.from({ length: 30 }, () => ({
+    x: Math.random() * width,
+    y: Math.random() * height,
+    r: Math.random() * 100 + 50,
+    dx: (Math.random() - 0.5) * 1,
+    dy: (Math.random() - 0.5) * 1,
+    color: colors[Math.floor(Math.random() * colors.length)]
+  }));
 
-      if (!pseudo || !type || !elite || !isNumeric(level) || !isNumeric(kills) || !isNumeric(sheriffWins) || !isNumeric(innocentWins)) {
-        showPopup("❌ Remplis tous les champs correctement !", false);
-        return;
-      }
+  function animate() {
+    ctx.clearRect(0, 0, width, height);
+    circles.forEach(c => {
+      c.x += c.dx;
+      c.y += c.dy;
+      if (c.x < 0 || c.x > width) c.dx *= -1;
+      if (c.y < 0 || c.y > height) c.dy *= -1;
 
-      const webhookURL = "https://discord.com/api/webhooks/1374774291706417267/ATDa2h7iIu_CUb2H2pis_wXgKg4NghXI9dpSVM8OVkjtGkquHUthbzlsXYAFpvn2xFnh";
-
-      const message = {
-        username: "MM2 Reporter",
-        embeds: [{
-          title: "🚨 Joueur signalé",
-          color: 15158332,
-          fields: [
-            { name: "🎮 Pseudo", value: pseudo, inline: true },
-            { name: "📌 Type", value: type, inline: true },
-            { name: "💎 Élite", value: elite, inline: true },
-            { name: "📈 Niveau", value: level.toString(), inline: true },
-            { name: "🔪 Kills Murderer", value: kills.toString(), inline: true },
-            { name: "🛡️ Wins Shérif", value: sheriffWins.toString(), inline: true },
-            { name: "👻 Wins Innocent", value: innocentWins.toString(), inline: true }
-          ],
-          timestamp: new Date().toISOString()
-        }]
-      };
-
-      try {
-        const res = await fetch(webhookURL, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(message)
-        });
-
-        if (res.ok) {
-          showPopup("✅ Rapport envoyé !");
-          clearFields();
-        } else {
-          showPopup("❌ Erreur lors de l'envoi au webhook.", false);
-        }
-      } catch (err) {
-        console.error(err);
-        showPopup("❌ Erreur réseau.", false);
-      }
-    }
-
-    // Fond animé avec points
-    const canvas = document.getElementById('bgCanvas');
-    const ctx = canvas.getContext('2d');
-    canvas.width = window.innerWidth;
-    canvas.height = window.innerHeight;
-
-    const dots = Array.from({ length: 100 }, () => ({
-      x: Math.random() * canvas.width,
-      y: Math.random() * canvas.height,
-      r: Math.random() * 2 + 1,
-      dx: Math.random() * 0.5 - 0.25,
-      dy: Math.random() * 0.5 - 0.25
-    }));
-
-    function animate() {
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-      for (let dot of dots) {
-        ctx.beginPath();
-        ctx.arc(dot.x, dot.y, dot.r, 0, Math.PI * 2);
-        ctx.fillStyle = 'white';
-        ctx.fill();
-        dot.x += dot.dx;
-        dot.y += dot.dy;
-        if (dot.x < 0 || dot.x > canvas.width) dot.dx *= -1;
-        if (dot.y < 0 || dot.y > canvas.height) dot.dy *= -1;
-      }
-      requestAnimationFrame(animate);
-    }
-
-    animate();
-    window.addEventListener("resize", () => {
-      canvas.width = window.innerWidth;
-      canvas.height = window.innerHeight;
+      let gradient = ctx.createRadialGradient(c.x, c.y, 0, c.x, c.y, c.r);
+      gradient.addColorStop(0, c.color);
+      gradient.addColorStop(1, 'transparent');
+      ctx.fillStyle = gradient;
+      ctx.beginPath();
+      ctx.arc(c.x, c.y, c.r, 0, Math.PI * 2);
+      ctx.fill();
     });
-  </script>
+    requestAnimationFrame(animate);
+  }
+
+  window.addEventListener('resize', () => {
+    width = canvas.width = window.innerWidth;
+    height = canvas.height = window.innerHeight;
+  });
+
+  animate();
+</script>
+
 </body>
 </html>
