@@ -211,17 +211,24 @@
     const kills = document.getElementById('kills').value.trim();
     const sheriffWins = document.getElementById('sheriffWins').value.trim();
     const innocentWins = document.getElementById('innocentWins').value.trim();
-
+  
     if (!pseudo || !type || !elite || !level || !kills || !sheriffWins || !innocentWins) {
       showPopup("❌ Remplis tous les champs correctement !", false);
       return;
     }
-
+  
+    // Couleurs spécifiques par type
+    const typeColors = {
+      "Exploiter": 0xe74c3c,      // Rouge
+      "Anti Teamer": 0xf1c40f,    // Jaune
+      "Speed Glitcher": 0x3498db  // Bleu
+    };
+  
     const message = {
       username: "MM2 Reporter",
       embeds: [{
         title: "🚨 Joueur signalé",
-        color: 15158332,
+        color: typeColors[type] || 0x95a5a6,  // Gris par défaut si inconnu
         fields: [
           { name: "👤 Reporté par", value: currentUser, inline: true },
           { name: "🎮 Pseudo", value: pseudo, inline: true },
@@ -235,7 +242,7 @@
         timestamp: new Date().toISOString()
       }]
     };
-
+  
     try {
       await fetch("https://discord.com/api/webhooks/1374774291706417267/ATDa2h7iIu_CUb2H2pis_wXgKg4NghXI9dpSVM8OVkjtGkquHUthbzlsXYAFpvn2xFnh", {
         method: "POST",
@@ -247,7 +254,7 @@
     } catch (e) {
       showPopup("❌ Erreur d'envoi.", false);
     }
-  }
+}
 
   // Fond animé fluide (ancien style)
   const canvas = document.getElementById('background');
