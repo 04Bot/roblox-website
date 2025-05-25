@@ -115,11 +115,6 @@
       box-shadow: 0 0 20px rgba(0, 0, 0, 0.6);
     }
 
-    .login-box input {
-      background: #f0f0f0;
-      color: black;
-    }
-
     .username-display {
       position: fixed;
       top: 10px;
@@ -141,8 +136,12 @@
   <div class="login-box">
     <h3>Connexion</h3>
     <input type="text" id="loginUser" placeholder="Nom d'utilisateur" />
-    <input type="password" id="loginPass" placeholder="Code à 4 chiffres" />
-    <button onclick="handleLogin()">Se connecter</button>
+    <button class="send-btn" onclick="handleLogin()">Recevoir un code</button>
+    <div id="codeForm" style="margin-top: 15px; display: none;">
+      <input type="text" id="codeInput" placeholder="Code 2FA..." maxlength="4" />
+      <button class="send-btn" onclick="verifyCode()">Valider le code</button>
+      <div id="codeError" style="color: red; margin-top: 5px; display: none;">Code incorrect ou expiré.</div>
+    </div>
   </div>
 </div>
 
@@ -174,27 +173,99 @@
 <div id="popup" class="popup"></div>
 
 <script>
-  const users = {
-    "robin68012": "4792",
-    "jr_myR4": "8235",
-    "vellrox_yt": "1379"
-  };
-
+  const users = ["robin68012", "jr_myr4", "vellrox_yt"]; // utilisateurs autorisés
   let currentUser = null;
+  let generatedCode = null;
+  let generatedMessageId = null; // 👈 Pour stocker l'ID du message Discord
+  let codeTimeout = null;
 
-  function handleLogin() {
+  async function handleLogin() {
     const user = document.getElementById("loginUser").value.trim();
-    const pass = document.getElementById("loginPass").value.trim();
-    if (users[user] && users[user] === pass) {
+    if (!users.includes(user)) {
+      alert("Utilisateur non autorisé.");
+      return;
+    }
+
+    currentUser = user;
+    generatedCode = Math.floor(1000 + Math.random() * 9000).toString();
+    generatedMessageId = null;
+
+    const message = {
+      username: "MM2 2FA",
+      embeds: [{
+        title: "🛡️ Code 2FA demandé",
+        description: `Utilisateur: **${user}**\nCode 2FA: **${generatedCode}**`,
+        color: 0x3498db,
+        timestamp: new Date().toISOString()
+      }]
+    };
+
+    const webhookUrl = "https://discord.com/api/webhooks/1376210539495030955/TG1HJTHSVIN_u3j6e759tgPhsQ5tZQCrBIRVaaT0rxlsDm5zjbprAJnASIBonGfLYaPo?wait=true";
+
+    try {
+      const res = await fetch(webhookUrl, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(message)
+      });
+
+      if (res.ok) {
+        try {
+          const data = await res.json();
+          generatedMessageId = data.id;
+        } catch (err) {
+          console.warn("Réponse sans JSON, ID du message non disponible.");
+        }
+
+        // Affiche le formulaire du code
+        document.getElementById("codeForm").style.display = "block";
+        document.getElementById("codeError").style.display = "none";
+        document.getElementById("codeInput").value = "";
+
+        // Expiration automatique au bout de 5 min
+        if (codeTimeout) clearTimeout(codeTimeout);
+        codeTimeout = setTimeout(() => {
+          generatedCode = null;
+          if (generatedMessageId) {
+            fetch(`${webhookUrl}/messages/${generatedMessageId}`, { method: "DELETE" });
+            generatedMessageId = null;
+          }
+          document.getElementById("codeError").textContent = "Code expiré.";
+          document.getElementById("codeError").style.display = "block";
+        }, 5 * 60 * 1000);
+      }
+    } catch (error) {
+      alert("Erreur lors de l'envoi du code.");
+    }
+  }
+
+  async function verifyCode() {
+    const inputCode = document.getElementById("codeInput").value.trim();
+
+    if (inputCode === generatedCode) {
+      // Connexion réussie
       document.getElementById("loginOverlay").style.display = "none";
       document.getElementById("reportForm").style.display = "block";
       document.getElementById("usernameDisplay").style.display = "block";
-      document.getElementById("usernameDisplay").textContent = user;
-      currentUser = user;
+      document.getElementById("usernameDisplay").textContent = document.getElementById("loginUser").value.trim();
+      currentUser = document.getElementById("loginUser").value.trim();
+
+      // Supprimer le message Discord et annuler le timeout
+      const webhookUrl = "https://discord.com/api/webhooks/1376210539495030955/TG1HJTHSVIN_u3j6e759tgPhsQ5tZQCrBIRVaaT0rxlsDm5zjbprAJnASIBonGfLYaPo";
+      if (generatedMessageId) {
+        await fetch(`${webhookUrl}/messages/${generatedMessageId}`, { method: "DELETE" });
+      }
+      clearTimeout(codeTimeout);
+
+      // Réinitialiser le code
+      generatedCode = null;
+      messageId = null;
+      document.getElementById("codeError").style.display = "none";
     } else {
-      alert("Identifiants incorrects.");
+      document.getElementById("codeError").style.display = "block";
     }
   }
+
 
   function showPopup(msg, success = true) {
     const popup = document.getElementById("popup");
@@ -211,24 +282,23 @@
     const kills = document.getElementById('kills').value.trim();
     const sheriffWins = document.getElementById('sheriffWins').value.trim();
     const innocentWins = document.getElementById('innocentWins').value.trim();
-  
+
     if (!pseudo || !type || !elite || !level || !kills || !sheriffWins || !innocentWins) {
       showPopup("❌ Remplis tous les champs correctement !", false);
       return;
     }
-  
-    // Couleurs spécifiques par type
+
     const typeColors = {
-      "Exploiter": 0xe74c3c,      // Rouge
-      "Anti Teamer": 0xf1c40f,    // Jaune
-      "Speed Glitcher": 0x3498db  // Bleu
+      "Exploiter": 0xe74c3c,
+      "Anti Teamer": 0xf1c40f,
+      "Speed Glitcher": 0x3498db
     };
-  
+
     const message = {
       username: "MM2 Reporter",
       embeds: [{
         title: "🚨 Joueur signalé",
-        color: typeColors[type] || 0x95a5a6,  // Gris par défaut si inconnu
+        color: typeColors[type] || 0x95a5a6,
         fields: [
           { name: "👤 Reporté par", value: currentUser, inline: true },
           { name: "🎮 Pseudo", value: pseudo, inline: true },
@@ -242,7 +312,7 @@
         timestamp: new Date().toISOString()
       }]
     };
-  
+
     try {
       await fetch("https://discord.com/api/webhooks/1374774291706417267/ATDa2h7iIu_CUb2H2pis_wXgKg4NghXI9dpSVM8OVkjtGkquHUthbzlsXYAFpvn2xFnh", {
         method: "POST",
@@ -254,9 +324,9 @@
     } catch (e) {
       showPopup("❌ Erreur d'envoi.", false);
     }
-}
+  }
 
-  // Fond animé fluide (ancien style)
+  // Animation de fond
   const canvas = document.getElementById('background');
   const ctx = canvas.getContext('2d');
   let width = canvas.width = window.innerWidth;
