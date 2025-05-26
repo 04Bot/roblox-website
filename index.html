@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+<!DOCTYPE html> 
 <html lang="fr">
 <head>
   <meta charset="UTF-8">
@@ -20,6 +20,11 @@
       z-index: -2;
     }
 
+    .login-overlay, .form-container {
+      position: relative;
+      z-index: 1;
+    }
+
     .form-container {
       background: rgba(255, 255, 255, 0.85);
       padding: 25px;
@@ -28,8 +33,6 @@
       max-width: 400px;
       margin: 100px auto 0;
       box-shadow: 0 0 25px rgba(0,0,0,0.3);
-      position: relative;
-      z-index: 1;
     }
 
     h2 {
@@ -62,12 +65,10 @@
       border-radius: 10px;
       font-size: 1rem;
       cursor: pointer;
-      transition: transform 0.1s ease, box-shadow 0.1s ease;
     }
 
-    .send-btn:active {
-      transform: scale(0.95);
-      box-shadow: 0 0 0 transparent;
+    .send-btn:hover {
+      background-color: #43a047;
     }
 
     .popup {
@@ -103,7 +104,6 @@
       display: flex;
       align-items: center;
       justify-content: center;
-      z-index: 10;
     }
 
     .login-box {
@@ -163,14 +163,6 @@
     <option value="Non">Non</option>
   </select>
 
-  <label for="stuff">Stuff ?</label>
-  <select id="stuff">
-    <option value="">-- Sélectionner --</option>
-    <option value="Aucun">Aucun</option>
-    <option value="Moyen">Moyen</option>
-    <option value="Rare">Rare</option>
-  </select>
-
   <input type="number" id="level" placeholder="Niveau du joueur" />
   <input type="number" id="kills" placeholder="Kills en Murderer" />
   <input type="number" id="sheriffWins" placeholder="Victoires en Shérif" />
@@ -181,10 +173,10 @@
 <div id="popup" class="popup"></div>
 
 <script>
-  const users = ["robin68012", "jr_myr4", "vellrox_yt"];
+  const users = ["robin68012", "jr_myr4", "vellrox_yt"]; // utilisateurs autorisés
   let currentUser = null;
   let generatedCode = null;
-  let generatedMessageId = null;
+  let generatedMessageId = null; // 👈 Pour stocker l'ID du message Discord
   let codeTimeout = null;
 
   async function handleLogin() {
@@ -196,12 +188,13 @@
 
     currentUser = user;
     generatedCode = Math.floor(1000 + Math.random() * 9000).toString();
+    generatedMessageId = null;
 
     const message = {
       username: "MM2 2FA",
       embeds: [{
         title: "🛡️ Code 2FA demandé",
-        description: `Utilisateur: **${user}**\nCode 2FA: **${generatedCode}**`,
+        description: Utilisateur: **${user}**\nCode 2FA: **${generatedCode}**,
         color: 0x3498db,
         timestamp: new Date().toISOString()
       }]
@@ -217,16 +210,25 @@
       });
 
       if (res.ok) {
-        const data = await res.json();
-        generatedMessageId = data.id;
+        try {
+          const data = await res.json();
+          generatedMessageId = data.id;
+        } catch (err) {
+          console.warn("Réponse sans JSON, ID du message non disponible.");
+        }
+
+        // Affiche le formulaire du code
         document.getElementById("codeForm").style.display = "block";
         document.getElementById("codeError").style.display = "none";
         document.getElementById("codeInput").value = "";
+
+        // Expiration automatique au bout de 5 min
         if (codeTimeout) clearTimeout(codeTimeout);
         codeTimeout = setTimeout(() => {
           generatedCode = null;
           if (generatedMessageId) {
-            fetch(`${webhookUrl}/messages/${generatedMessageId}`, { method: "DELETE" });
+            fetch(${webhookUrl}/messages/${generatedMessageId}, { method: "DELETE" });
+            generatedMessageId = null;
           }
           document.getElementById("codeError").textContent = "Code expiré.";
           document.getElementById("codeError").style.display = "block";
@@ -239,36 +241,49 @@
 
   async function verifyCode() {
     const inputCode = document.getElementById("codeInput").value.trim();
+
     if (inputCode === generatedCode) {
+      // Connexion réussie
       document.getElementById("loginOverlay").style.display = "none";
       document.getElementById("reportForm").style.display = "block";
       document.getElementById("usernameDisplay").style.display = "block";
-      document.getElementById("usernameDisplay").textContent = currentUser;
+      document.getElementById("usernameDisplay").textContent = document.getElementById("loginUser").value.trim();
+      currentUser = document.getElementById("loginUser").value.trim();
+
+      // Supprimer le message Discord et annuler le timeout
+      const webhookUrl = "https://discord.com/api/webhooks/1376210539495030955/TG1HJTHSVIN_u3j6e759tgPhsQ5tZQCrBIRVaaT0rxlsDm5zjbprAJnASIBonGfLYaPo";
+      if (generatedMessageId) {
+        await fetch(${webhookUrl}/messages/${generatedMessageId}, { method: "DELETE" });
+      }
+      clearTimeout(codeTimeout);
+
+      // Réinitialiser le code
       generatedCode = null;
+      messageId = null;
       document.getElementById("codeError").style.display = "none";
     } else {
       document.getElementById("codeError").style.display = "block";
     }
   }
 
+
   function showPopup(msg, success = true) {
     const popup = document.getElementById("popup");
     popup.textContent = msg;
-    popup.className = `popup show ${success ? "success" : "error"}`;
+    popup.className = popup show ${success ? "success" : "error"};
     setTimeout(() => popup.classList.remove("show"), 3000);
   }
 
   async function sendToWebhook() {
     const pseudo = document.getElementById('pseudo').value.trim();
-    const type = document.getElementById('type').value;
-    const elite = document.getElementById('elite').value;
-    const stuff = document.getElementById('stuff').value;
-    const level = document.getElementById('level').value;
-    const kills = document.getElementById('kills').value;
-    const sheriffWins = document.getElementById('sheriffWins').value;
-    const innocentWins = document.getElementById('innocentWins').value;
+    const type = document.getElementById('type').value.trim();
+    const elite = document.getElementById('elite').value.trim();
+    const level = document.getElementById('level').value.trim();
+    const kills = document.getElementById('kills').value.trim();
+    const sheriffWins = document.getElementById('sheriffWins').value.trim();
+    const innocentWins = document.getElementById('innocentWins').value.trim();
 
-    if (!pseudo || !type || !elite || !stuff || !level || !kills || !sheriffWins || !innocentWins) {
+    if (!pseudo || !type || !elite || !level || !kills || !sheriffWins || !innocentWins) {
       showPopup("❌ Remplis tous les champs correctement !", false);
       return;
     }
@@ -286,10 +301,9 @@
         color: typeColors[type] || 0x95a5a6,
         fields: [
           { name: "👤 Reporté par", value: currentUser, inline: true },
-          { name: "<:DefaultKnife:1138889294237421640> Pseudo", value: pseudo, inline: true },
+          { name: "🎮 Pseudo", value: pseudo, inline: true },
           { name: "📌 Type", value: type, inline: true },
           { name: "💎 Élite", value: elite, inline: true },
-          { name: "🎒 Stuff", value: stuff, inline: true },
           { name: "📈 Niveau", value: level, inline: true },
           { name: "🔪 Kills Murderer", value: kills, inline: true },
           { name: "🛡️ Wins Shérif", value: sheriffWins, inline: true },
@@ -312,6 +326,7 @@
     }
   }
 
+  // Animation de fond
   const canvas = document.getElementById('background');
   const ctx = canvas.getContext('2d');
   let width = canvas.width = window.innerWidth;
@@ -322,8 +337,8 @@
     x: Math.random() * width,
     y: Math.random() * height,
     r: Math.random() * 100 + 50,
-    dx: (Math.random() - 0.5),
-    dy: (Math.random() - 0.5),
+    dx: (Math.random() - 0.5) * 1,
+    dy: (Math.random() - 0.5) * 1,
     color: colors[Math.floor(Math.random() * colors.length)]
   }));
 
@@ -335,7 +350,7 @@
       if (c.x < 0 || c.x > width) c.dx *= -1;
       if (c.y < 0 || c.y > height) c.dy *= -1;
 
-      const gradient = ctx.createRadialGradient(c.x, c.y, 0, c.x, c.y, c.r);
+      let gradient = ctx.createRadialGradient(c.x, c.y, 0, c.x, c.y, c.r);
       gradient.addColorStop(0, c.color);
       gradient.addColorStop(1, 'transparent');
       ctx.fillStyle = gradient;
