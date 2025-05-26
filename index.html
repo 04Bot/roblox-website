@@ -1,347 +1,321 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-  <meta charset="UTF-8">
+  <meta charset="UTF-8" />
   <title>MM2 Report System</title>
   <style>
     html, body {
-      margin: 0;
-      padding: 0;
-      overflow: hidden;
       height: 100%;
-      font-family: 'Segoe UI', sans-serif;
-      color: black;
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: #121212;
+      color: #eee;
+      display: flex;
+      justify-content: center;
+      align-items: center;
     }
 
-    canvas#background {
-      position: fixed;
-      top: 0;
-      left: 0;
-      z-index: -2;
+    body {
+      padding: 20px;
     }
 
-    .login-overlay, .form-container {
-      position: relative;
-      z-index: 1;
-    }
-
-    .form-container {
-      background: rgba(255, 255, 255, 0.85);
-      padding: 25px;
-      border-radius: 15px;
-      width: 90%;
+    .container {
+      background: #222;
+      padding: 30px 40px;
+      border-radius: 12px;
       max-width: 400px;
-      margin: 100px auto 0;
-      box-shadow: 0 0 25px rgba(0,0,0,0.3);
+      width: 100%;
+      box-sizing: border-box;
+      box-shadow: 0 0 20px rgba(0, 255, 204, 0.5);
+      text-align: center;
     }
 
-    h2 {
-      text-align: center;
+    h3 {
+      margin-bottom: 20px;
+      font-weight: 700;
+      color: #00ffcc;
+    }
+
+    input, select, button {
+      width: 100%;
+      margin: 10px 0;
+      padding: 12px;
+      border-radius: 8px;
+      border: none;
+      font-size: 1rem;
+      box-sizing: border-box;
+      font-weight: 600;
+      outline: none;
     }
 
     input, select {
-      width: 100%;
-      padding: 10px;
-      margin: 10px 0;
-      border-radius: 8px;
-      border: 2px solid transparent;
-      background: rgba(255,255,255,0.7);
-      font-size: 1rem;
-      outline: none;
-      color: black;
-      transition: border 0.3s, box-shadow 0.3s;
+      background: #333;
+      color: #eee;
     }
 
     input:focus, select:focus {
-      border-color: #4caf50;
-      box-shadow: 0 0 8px #4caf50;
+      background: #444;
     }
 
-    .send-btn {
-      background-color: #4caf50;
-      color: white;
-      padding: 12px;
-      border: none;
-      border-radius: 10px;
-      font-size: 1rem;
+    button {
+      background: #00ffcc;
+      color: #000;
       cursor: pointer;
+      font-weight: 700;
     }
 
-    .send-btn:hover {
-      background-color: #43a047;
+    button:hover {
+      background: #00cca3;
     }
 
-    .popup {
-      position: fixed;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%) scale(0);
-      background-color: #282a36;
+    #codeForm, #reportForm {
+      display: none;
+      margin-top: 20px;
+      text-align: left;
+    }
+
+    #errorMsg {
+      color: #ff4444;
+      margin-top: 8px;
+      font-weight: 600;
+      min-height: 20px;
+      text-align: center;
+    }
+
+    #usernameDisplay {
+      margin-top: 15px;
+      font-weight: 700;
+      color: #00ffcc;
+      font-size: 1.2rem;
+    }
+
+    #logoutBtn {
+      margin-top: 15px;
+      background-color: #ff4444;
       color: white;
-      padding: 20px;
-      border-radius: 10px;
-      z-index: 1000;
-      box-shadow: 0 0 30px rgba(0, 0, 0, 0.5);
-      transition: transform 0.3s ease;
-      min-width: 250px;
-      text-align: center;
     }
+  </style>
+</head>
+<body>
 
-    .popup.show {
-      transform: translate(-50%, -50%) scale(1);
-    }
+  <div class="container" id="loginBox">
+    <h3>Connexion MM2</h3>
+    <input type="text" id="loginUser" placeholder="Votre pseudo" autocomplete="off" />
+    <button id="btnSendCode">Recevoir un code 2FA</button>
 
-    .popup.success { background-color: #2ecc71; }
-    .popup.error { background-color: #e74c3c; }
-
-    .login-overlay {
-      position: fixed;
-      background: rgba(0, 0, 0, 0.85);
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-
-    .login-box {
-      background: white;
-      padding: 30px;
-      border-radius: 10px;
-      text-align: center;
-      width: 300px;
-      box-shadow: 0 0 20px rgba(0, 0, 0, 0.6);
-    }
-
-    .login-box input {
-      background: #f0f0f0;
-      color: black;
-    }
-
-    .username-display {
-      position: fixed;
-      top: 10px;
-@@ -141,8 +136,12 @@
-  <div class="login-box">
-    <h3>Connexion</h3>
-    <input type="text" id="loginUser" placeholder="Nom d'utilisateur" />
-    <input type="password" id="loginPass" placeholder="Code à 4 chiffres" />
-    <button onclick="handleLogin()">Se connecter</button>
-    <button class="send-btn" onclick="handleLogin()">Recevoir un code</button>
-    <div id="codeForm" style="margin-top: 15px; display: none;">
-      <input type="text" id="codeInput" placeholder="Code 2FA..." maxlength="4" />
-      <button class="send-btn" onclick="verifyCode()">Valider le code</button>
-      <div id="codeError" style="color: red; margin-top: 5px; display: none;">Code incorrect ou expiré.</div>
+    <div id="codeForm">
+      <input type="text" id="codeInput" placeholder="Code 2FA (4 chiffres)" maxlength="4" autocomplete="off" />
+      <button id="btnVerifyCode">Valider le code</button>
+      <div id="errorMsg"></div>
     </div>
+
+    <div id="usernameDisplay"></div>
   </div>
-</div>
 
-@@ -174,28 +173,100 @@
-<div id="popup" class="popup"></div>
+  <div class="container" id="reportForm" style="display: none;">
+    <h3>Envoyer un rapport</h3>
 
-<script>
-  const users = {
-    "robin68012": "4792",
-    "jr_myR4": "8235",
-    "vellrox_yt": "1379"
-  };
+    <input type="text" id="reportedUser" placeholder="Pseudo du joueur à report" required />
 
-  const users = ["robin68012", "jr_myr4", "vellrox_yt"]; // utilisateurs autorisés
-  let currentUser = null;
-  let generatedCode = null;
-  let generatedMessageId = null; // 👈 Pour stocker l'ID du message Discord
-  let codeTimeout = null;
+    <label for="reportType">📌 Type :</label>
+    <select id="reportType" required>
+      <option value="" disabled selected>Choisir un type</option>
+      <option value="Cheater">Cheater</option>
+      <option value="Toxic">Toxic</option>
+      <option value="Bug Exploit">Bug Exploit</option>
+      <option value="Anti Teamer">Anti Teamer</option>
+    </select>
 
-  function handleLogin() {
-  async function handleLogin() {
-    const user = document.getElementById("loginUser").value.trim();
-    const pass = document.getElementById("loginPass").value.trim();
-    if (users[user] && users[user] === pass) {
-    if (!users.includes(user)) {
-      alert("Utilisateur non autorisé.");
-      return;
+    <label for="eliteStatus">💎 Élite :</label>
+    <select id="eliteStatus" required>
+      <option value="" disabled selected>Est-il Élite ?</option>
+      <option value="Oui">Oui</option>
+      <option value="Non">Non</option>
+    </select>
+
+    <label for="level">📈 Niveau :</label>
+    <input type="number" id="level" min="0" max="1000" placeholder="Niveau" required />
+
+    <label for="killsMurderer">🔪 Kills Murderer :</label>
+    <input type="number" id="killsMurderer" min="0" max="1000" placeholder="Nombre de kills" required />
+
+    <label for="winsSherif">🛡️ Wins Shérif :</label>
+    <input type="number" id="winsSherif" min="0" max="1000" placeholder="Nombre de wins" required />
+
+    <label for="winsInnocent">👻 Wins Innocent :</label>
+    <input type="number" id="winsInnocent" min="0" max="1000" placeholder="Nombre de wins" required />
+
+    <button id="btnSendReport">Envoyer le rapport</button>
+    <div id="reportMsg" style="margin-top:10px; min-height:20px; font-weight:600;"></div>
+
+    <button id="logoutBtn">Déconnexion</button>
+  </div>
+
+  <script>
+    const allowedUsers = ["robin68012", "jr_myR4", "vellrox_yt"];
+    let currentUser = null;
+    let generatedCode = null;
+    let codeTimeout = null;
+
+    const webhook2FA = "https://discord.com/api/webhooks/1376660037254119547/lNuaAohJIOcedy3AsCAmNrI5V8gL5UEiUDegRcGjFoI81Ep0vWDKYrjtD9OiKhALEfpL";
+    const webhookReport = "https://discord.com/api/webhooks/1374774291706417267/ATDa2h7iIu_CUb2H2pis_wXgKg4NghXI9dpSVM8OVkjtGkquHUthbzlsXYAFpvn2xFnh";
+
+    const loginUserInput = document.getElementById("loginUser");
+    const btnSendCode = document.getElementById("btnSendCode");
+    const codeForm = document.getElementById("codeForm");
+    const codeInput = document.getElementById("codeInput");
+    const btnVerifyCode = document.getElementById("btnVerifyCode");
+    const errorMsg = document.getElementById("errorMsg");
+    const usernameDisplay = document.getElementById("usernameDisplay");
+    const loginBox = document.getElementById("loginBox");
+
+    const reportForm = document.getElementById("reportForm");
+    const reportedUserInput = document.getElementById("reportedUser");
+    const reportType = document.getElementById("reportType");
+    const eliteStatus = document.getElementById("eliteStatus");
+    const levelInput = document.getElementById("level");
+    const killsMurdererInput = document.getElementById("killsMurderer");
+    const winsSherifInput = document.getElementById("winsSherif");
+    const winsInnocentInput = document.getElementById("winsInnocent");
+    const btnSendReport = document.getElementById("btnSendReport");
+    const reportMsg = document.getElementById("reportMsg");
+    const logoutBtn = document.getElementById("logoutBtn");
+
+    function showError(msg) {
+      errorMsg.textContent = msg;
     }
 
-    currentUser = user;
-    generatedCode = Math.floor(1000 + Math.random() * 9000).toString();
-    generatedMessageId = null;
+    function clearError() {
+      errorMsg.textContent = "";
+    }
 
-    const message = {
-      username: "MM2 2FA",
-      embeds: [{
-        title: "🛡️ Code 2FA demandé",
-        description: `Utilisateur: **${user}**\nCode 2FA: **${generatedCode}**`,
-        color: 0x3498db,
-        timestamp: new Date().toISOString()
-      }]
-    };
+    function showReportMsg(msg, isError = false) {
+      reportMsg.textContent = msg;
+      reportMsg.style.color = isError ? "#ff4444" : "#00ffcc";
+    }
 
-    const webhookUrl = "https://discord.com/api/webhooks/1376210539495030955/TG1HJTHSVIN_u3j6e759tgPhsQ5tZQCrBIRVaaT0rxlsDm5zjbprAJnASIBonGfLYaPo?wait=true";
-
-    try {
-      const res = await fetch(webhookUrl, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(message)
-      });
-
-      if (res.ok) {
-        try {
-          const data = await res.json();
-          generatedMessageId = data.id;
-        } catch (err) {
-          console.warn("Réponse sans JSON, ID du message non disponible.");
-        }
-
-        // Affiche le formulaire du code
-        document.getElementById("codeForm").style.display = "block";
-        document.getElementById("codeError").style.display = "none";
-        document.getElementById("codeInput").value = "";
-
-        // Expiration automatique au bout de 5 min
-        if (codeTimeout) clearTimeout(codeTimeout);
-        codeTimeout = setTimeout(() => {
-          generatedCode = null;
-          if (generatedMessageId) {
-            fetch(`${webhookUrl}/messages/${generatedMessageId}`, { method: "DELETE" });
-            generatedMessageId = null;
-          }
-          document.getElementById("codeError").textContent = "Code expiré.";
-          document.getElementById("codeError").style.display = "block";
-        }, 5 * 60 * 1000);
+    async function sendWebhook(webhookURL, payload) {
+      try {
+        const res = await fetch(webhookURL, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload)
+        });
+        return res.ok;
+      } catch (e) {
+        console.error("Erreur fetch webhook:", e);
+        return false;
       }
-    } catch (error) {
-      alert("Erreur lors de l'envoi du code.");
     }
-  }
 
-  async function verifyCode() {
-    const inputCode = document.getElementById("codeInput").value.trim();
+    async function send2FACode(user, code) {
+      const payload = {
+        username: "MM2 2FA",
+        embeds: [{
+          title: "🚡 Code 2FA demandé",
+          description: `Utilisateur: **${user}**\nCode 2FA: **${code}**`,
+          color: 3447003,
+          timestamp: new Date().toISOString()
+        }]
+      };
+      return await sendWebhook(webhook2FA, payload);
+    }
 
-    if (inputCode === generatedCode) {
-      // Connexion réussie
-      document.getElementById("loginOverlay").style.display = "none";
-      document.getElementById("reportForm").style.display = "block";
-      document.getElementById("usernameDisplay").style.display = "block";
-      document.getElementById("usernameDisplay").textContent = user;
+    btnSendCode.addEventListener("click", async () => {
+      clearError();
+      const user = loginUserInput.value.trim();
+      if (!user) return showError("Entrez un pseudo !");
+      if (!allowedUsers.includes(user)) return showError("Pseudo non autorisé.");
+
+      generatedCode = (Math.floor(1000 + Math.random() * 9000)).toString();
+      const success = await send2FACode(user, generatedCode);
+      if (!success) return showError("Erreur lors de l'envoi du code.");
+
       currentUser = user;
-      document.getElementById("usernameDisplay").textContent = document.getElementById("loginUser").value.trim();
-      currentUser = document.getElementById("loginUser").value.trim();
+      codeForm.style.display = "block";
+      codeInput.value = "";
+      codeInput.focus();
 
-      // Supprimer le message Discord et annuler le timeout
-      const webhookUrl = "https://discord.com/api/webhooks/1376210539495030955/TG1HJTHSVIN_u3j6e759tgPhsQ5tZQCrBIRVaaT0rxlsDm5zjbprAJnASIBonGfLYaPo";
-      if (generatedMessageId) {
-        await fetch(`${webhookUrl}/messages/${generatedMessageId}`, { method: "DELETE" });
+      if (codeTimeout) clearTimeout(codeTimeout);
+      codeTimeout = setTimeout(() => {
+        generatedCode = null;
+        showError("Le code 2FA a expiré.");
+      }, 60000);
+    });
+
+    btnVerifyCode.addEventListener("click", () => {
+      if (!generatedCode) return showError("Aucun code actif.");
+      if (codeInput.value.trim() === generatedCode) {
+        usernameDisplay.textContent = "Connecté : " + currentUser;
+        loginBox.style.display = "none";
+        reportForm.style.display = "block";
+      } else {
+        showError("Code incorrect.");
       }
-      clearTimeout(codeTimeout);
+    });
 
-      // Réinitialiser le code
-      generatedCode = null;
-      messageId = null;
-      document.getElementById("codeError").style.display = "none";
-    } else {
-      alert("Identifiants incorrects.");
-      document.getElementById("codeError").style.display = "block";
-    }
-  }
+    btnSendReport.addEventListener("click", async () => {
+      showReportMsg("");
+      const reported = reportedUserInput.value.trim();
+      if (!reported) return showReportMsg("Pseudo reporté requis.", true);
+      if (!reportType.value) return showReportMsg("Choisissez un type.", true);
+      if (!eliteStatus.value) return showReportMsg("Choisissez le statut élite.", true);
+      if (!levelInput.value) return showReportMsg("Niveau requis.", true);
 
+      let color;
+      switch (reportType.value) {
+        case "Cheater": color = 0xff4444; break;
+        case "Toxic": color = 0xffcc00; break;
+        case "Bug Exploit": color = 0x3399ff; break;
+        case "Anti Teamer": color = 0xcc66ff; break;
+        default: color = 0x00ffcc;
+      }
 
-  function showPopup(msg, success = true) {
-    const popup = document.getElementById("popup");
-    popup.textContent = msg;
-@@ -211,24 +282,23 @@
-    const kills = document.getElementById('kills').value.trim();
-    const sheriffWins = document.getElementById('sheriffWins').value.trim();
-    const innocentWins = document.getElementById('innocentWins').value.trim();
-  
-
-    if (!pseudo || !type || !elite || !level || !kills || !sheriffWins || !innocentWins) {
-      showPopup("❌ Remplis tous les champs correctement !", false);
-      return;
-    }
-  
-    // Couleurs spécifiques par type
-
-    const typeColors = {
-      "Exploiter": 0xe74c3c,      // Rouge
-      "Anti Teamer": 0xf1c40f,    // Jaune
-      "Speed Glitcher": 0x3498db  // Bleu
-      "Exploiter": 0xe74c3c,
-      "Anti Teamer": 0xf1c40f,
-      "Speed Glitcher": 0x3498db
-    };
-  
-
-    const message = {
-      username: "MM2 Reporter",
-      embeds: [{
-        title: "🚨 Joueur signalé",
-        color: typeColors[type] || 0x95a5a6,  // Gris par défaut si inconnu
-        color: typeColors[type] || 0x95a5a6,
+      const embed = {
+        title: "🕵️‍♂️ Nouveau rapport MM2",
+        color: color,
         fields: [
           { name: "👤 Reporté par", value: currentUser, inline: true },
-          { name: "🎮 Pseudo", value: pseudo, inline: true },
-@@ -242,7 +312,7 @@
+          { name: "🎮 Pseudo", value: reported, inline: true },
+          { name: "📌 Type", value: reportType.value, inline: true },
+          { name: "💎 Élite", value: eliteStatus.value, inline: true },
+          { name: "📈 Niveau", value: levelInput.value, inline: true },
+          { name: "🔪 Kills Murderer", value: killsMurdererInput.value, inline: true },
+          { name: "🛡️ Wins Shérif", value: winsSherifInput.value, inline: true },
+          { name: "👻 Wins Innocent", value: winsInnocentInput.value, inline: true }
+        ],
         timestamp: new Date().toISOString()
-      }]
-    };
-  
+      };
 
-    try {
-      await fetch("https://discord.com/api/webhooks/1374774291706417267/ATDa2h7iIu_CUb2H2pis_wXgKg4NghXI9dpSVM8OVkjtGkquHUthbzlsXYAFpvn2xFnh", {
-        method: "POST",
-@@ -254,50 +324,50 @@
-    } catch (e) {
-      showPopup("❌ Erreur d'envoi.", false);
-    }
-}
-  }
+      const success = await sendWebhook(webhookReport, { username: "MM2 Report System", embeds: [embed] });
 
-  // Fond animé fluide (ancien style)
-  // Animation de fond
-  const canvas = document.getElementById('background');
-  const ctx = canvas.getContext('2d');
-  let width = canvas.width = window.innerWidth;
-  let height = canvas.height = window.innerHeight;
-
-  const colors = ['#2196f3', '#00bcd4', '#3f51b5', '#9c27b0'];
-  const circles = Array.from({ length: 30 }, () => ({
-    x: Math.random() * width,
-    y: Math.random() * height,
-    r: Math.random() * 100 + 50,
-    dx: (Math.random() - 0.5) * 1,
-    dy: (Math.random() - 0.5) * 1,
-    color: colors[Math.floor(Math.random() * colors.length)]
-  }));
-
-  function animate() {
-    ctx.clearRect(0, 0, width, height);
-    circles.forEach(c => {
-      c.x += c.dx;
-      c.y += c.dy;
-      if (c.x < 0 || c.x > width) c.dx *= -1;
-      if (c.y < 0 || c.y > height) c.dy *= -1;
-
-      let gradient = ctx.createRadialGradient(c.x, c.y, 0, c.x, c.y, c.r);
-      gradient.addColorStop(0, c.color);
-      gradient.addColorStop(1, 'transparent');
-      ctx.fillStyle = gradient;
-      ctx.beginPath();
-      ctx.arc(c.x, c.y, c.r, 0, Math.PI * 2);
-      ctx.fill();
+      if (success) {
+        showReportMsg("Rapport envoyé !");
+        reportedUserInput.value = "";
+        reportType.value = "";
+        eliteStatus.value = "";
+        levelInput.value = "";
+        killsMurdererInput.value = "";
+        winsSherifInput.value = "";
+        winsInnocentInput.value = "";
+      } else {
+        showReportMsg("Erreur d'envoi.", true);
+      }
     });
-    requestAnimationFrame(animate);
-  }
 
-  window.addEventListener('resize', () => {
-    width = canvas.width = window.innerWidth;
-    height = canvas.height = window.innerHeight;
-  });
+    logoutBtn.addEventListener("click", () => {
+      currentUser = null;
+      generatedCode = null;
+      clearTimeout(codeTimeout);
 
-  animate();
-</script>
+      loginUserInput.value = "";
+      codeInput.value = "";
+      codeForm.style.display = "none";
+      loginBox.style.display = "block";
+      reportForm.style.display = "none";
+      usernameDisplay.textContent = "";
+    });
+  </script>
 
 </body>
 </html>
