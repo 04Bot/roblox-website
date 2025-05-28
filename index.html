@@ -116,9 +116,10 @@
     <select id="reportType" required>
       <option value="" disabled selected>Choisir un type</option>
       <option value="Speed Glitcher">Speed Glitcher</option>
-      <option value="Toxic">Toxic</option>
+      <option value="Glitcher">Glitcher</option>
       <option value="Exploiter">Exploiter</option>
       <option value="Anti Teamer">Anti Teamer</option>
+      <option value="Teamer">Teamer</option>
     </select>
     <label for="eliteStatus">💎 Élite :</label>
     <select id="eliteStatus" required>
@@ -143,22 +144,36 @@
     const webhook2FA = "https://discord.com/api/webhooks/1376660037254119547/lNuaAohJIOcedy3AsCAmNrI5V8gL5UEiUDegRcGjFoI81Ep0vWDKYrjtD9OiKhALEfpL";
     const webhookReport = "https://discord.com/api/webhooks/1374774291706417267/ATDa2h7iIu_CUb2H2pis_wXgKg4NghXI9dpSVM8OVkjtGkquHUthbzlsXYAFpvn2xFnh";
     const allowedUsers = ["robin68012", "jr_myR4", "vellrox_yt"];
-    let currentUser = null, generatedCode = null, codeTimeout = null;
+
+    let currentUser = null, generatedCode = null, codeTimeout = null, messageId2FA = null;
 
     const reportColors = {
-      "Speed Glitcher": 0xFF4444,
-      "Toxic": 0xFFCC00,
-      "Exploiter": 0x3399FF,
-      "Anti Teamer": 0xCC66FF
+        "Speed Glitcher": 0x3498db,
+        "Glitcher": 0xFE9900,
+        "Exploiter": 0xe74c3c,
+        "Anti Teamer": 0xf1c40f,
+        "Teamer": 0x060270
     };
 
     async function sendWebhook(url, payload) {
       try {
-        const res = await fetch(url, {
+        const res = await fetch(url + "?wait=true", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(payload)
         });
+        if (!res.ok) return null;
+        const data = await res.json();
+        return data.id; // retourne l'ID du message
+      } catch {
+        return null;
+      }
+    }
+
+    async function deleteWebhookMessage(webhookURL, messageId) {
+      try {
+        const url = webhookURL + `/messages/${messageId}`;
+        const res = await fetch(url, { method: "DELETE" });
         return res.ok;
       } catch {
         return false;
@@ -169,7 +184,8 @@
       const user = loginUser.value.trim();
       if (!allowedUsers.includes(user)) return showError("Pseudo non autorisé.");
       generatedCode = Math.floor(1000 + Math.random() * 9000).toString();
-      await sendWebhook(webhook2FA, {
+
+      messageId2FA = await sendWebhook(webhook2FA, {
         username: "MM2 2FA",
         embeds: [{
           title: "🛡️ Code 2FA demandé",
@@ -178,17 +194,27 @@
           timestamp: new Date().toISOString()
         }]
       });
+
       currentUser = user;
       codeForm.style.display = "block";
-      codeTimeout = setTimeout(() => (generatedCode = null), 60000);
+      codeTimeout = setTimeout(() => {
+        generatedCode = null;
+        showError("Code expiré. Veuillez redemander.");
+      }, 60000);
     };
 
-    document.getElementById("btnVerifyCode").onclick = () => {
+    document.getElementById("btnVerifyCode").onclick = async () => {
       if (codeInput.value === generatedCode) {
         loginBox.style.display = "none";
         reportForm.style.display = "block";
         usernameDisplay.textContent = "Connecté : " + currentUser;
-      } else showError("Code incorrect ou expiré.");
+        if (messageId2FA) {
+          await deleteWebhookMessage(webhook2FA, messageId2FA);
+          messageId2FA = null;
+        }
+      } else {
+        showError("Code incorrect ou expiré.");
+      }
     };
 
     document.getElementById("btnSendReport").onclick = async () => {
@@ -209,12 +235,17 @@
         timestamp: new Date().toISOString()
       };
 
-      const ok = await sendWebhook(webhookReport, { username: "MM2 Report System", embeds: [embed] });
+      const ok = await sendWebhook(webhookReport, {
+        username: "MM2 Report System",
+        embeds: [embed]
+      });
+
       reportMsg.textContent = ok ? "Rapport envoyé !" : "Erreur d'envoi.";
       reportMsg.style.color = ok ? "#00ffcc" : "#ff4444";
     };
 
     document.getElementById("logoutBtn").onclick = () => {
+      if (!confirm("Se déconnecter ?")) return;
       [currentUser, generatedCode] = [null, null];
       clearTimeout(codeTimeout);
       loginBox.style.display = "block";
