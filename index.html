@@ -220,7 +220,7 @@
     document.getElementById("btnSendReport").onclick = async () => {
       const type = reportType.value;
       const embed = {
-        title: "🕵️‍♂️ Nouveau rapport MM2",
+        title: "🚨 Joueur signalé",
         color: reportColors[type] || 0x00ffcc,
         fields: [
           { name: "👤 Reporté par", value: currentUser, inline: true },
