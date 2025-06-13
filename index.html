@@ -4,260 +4,259 @@
   <meta charset="UTF-8" />
   <title>MM2 Report System</title>
   <style>
+    * { box-sizing: border-box; }
     html, body {
-      height: 100%;
       margin: 0;
-      font-family: Arial, sans-serif;
-      background: #121212;
-      color: #eee;
+      padding: 0;
+      height: 100%;
+      font-family: 'Segoe UI', sans-serif;
+      background: linear-gradient(135deg, #121212, #1f1f1f);
+      color: #fff;
       display: flex;
       justify-content: center;
       align-items: center;
     }
-
-    body {
-      padding: 20px;
-    }
-
     .container {
-      background: #222;
-      padding: 30px 40px;
-      border-radius: 12px;
-      max-width: 400px;
+      background: #1e1e1e;
+      border-radius: 16px;
+      padding: 30px;
+      max-width: 420px;
       width: 100%;
-      box-sizing: border-box;
-      box-shadow: 0 0 20px rgba(0, 255, 204, 0.5);
+      box-shadow: 0 0 30px rgba(0,255,200,0.3);
       text-align: center;
     }
-
     h3 {
+      color: #00ffc3;
       margin-bottom: 20px;
-      font-weight: 700;
-      color: #00ffcc;
     }
-
     input, select, button {
       width: 100%;
-      margin: 10px 0;
+      margin: 6px 0;
       padding: 12px;
-      border-radius: 8px;
       border: none;
+      border-radius: 8px;
       font-size: 1rem;
-      box-sizing: border-box;
-      font-weight: 600;
-      outline: none;
     }
-
     input, select {
-      background: #333;
-      color: #eee;
+      background: #2e2e2e;
+      color: #fff;
     }
-
-    input:focus, select:focus {
-      background: #444;
-    }
-
     button {
-      background: #00ffcc;
+      background: #00ffc3;
       color: #000;
+      font-weight: bold;
       cursor: pointer;
-      font-weight: 700;
     }
-
     button:hover {
-      background: #00cca3;
+      background: #00dab0;
     }
-
-    #codeForm, #reportForm {
+    #reportForm, #codeForm { display: none; text-align: left; }
+    #logoutBtn { background: #ff4c4c; color: white; }
+    #leaderboardPopup {
+      position: fixed;
+      top: 50%; left: 50%;
+      transform: translate(-50%, -50%);
+      background: #262626;
+      padding: 20px;
+      border-radius: 12px;
       display: none;
-      margin-top: 20px;
-      text-align: left;
+      max-width: 90%;
+      width: 400px;
+      box-shadow: 0 0 20px rgba(0,255,204,0.5);
     }
-
-    #errorMsg {
-      color: #ff4444;
-      margin-top: 8px;
-      font-weight: 600;
+    #leaderboardPopup h3 { color: #00ffc3; margin-bottom: 10px; }
+    .leaderboard-entry {
+      background: #333;
+      margin: 5px 0;
+      padding: 10px;
+      border-radius: 8px;
+    }
+    #closePopup {
+      background: #ff4c4c;
+      margin-top: 10px;
+    }
+    #errorMsg, #reportMsg {
+      margin-top: 10px;
       min-height: 20px;
-      text-align: center;
-    }
-
-    #usernameDisplay {
-      margin-top: 15px;
-      font-weight: 700;
-      color: #00ffcc;
-      font-size: 1.2rem;
-    }
-
-    #logoutBtn {
-      margin-top: 15px;
-      background-color: #ff4444;
-      color: white;
+      font-weight: 600;
     }
   </style>
 </head>
 <body>
   <div class="container" id="loginBox">
     <h3>Connexion MM2</h3>
-    <input type="text" id="loginUser" placeholder="Votre pseudo" autocomplete="off" />
+    <input type="text" id="loginUser" />
     <button id="btnSendCode">Recevoir un code 2FA</button>
     <div id="codeForm">
-      <input type="text" id="codeInput" placeholder="Code 2FA (4 chiffres)" maxlength="4" autocomplete="off" />
+      <input type="text" id="codeInput" maxlength="4" />
       <button id="btnVerifyCode">Valider le code</button>
       <div id="errorMsg"></div>
     </div>
-    <div id="usernameDisplay"></div>
   </div>
 
-  <div class="container" id="reportForm" style="display: none;">
+  <div class="container" id="reportForm">
     <h3>Envoyer un rapport</h3>
-    <input type="text" id="reportedUser" placeholder="Pseudo du joueur à report" required />
-    <label for="reportType">📌 Type :</label>
-    <select id="reportType" required>
-      <option value="" disabled selected>Choisir un type</option>
+    <input type="text" id="reportedUser" placeholder="Pseudo du joueur" />
+    <select id="reportType">
+      <option value="">Type</option>
       <option value="Speed Glitcher">Speed Glitcher</option>
       <option value="Glitcher">Glitcher</option>
       <option value="Exploiter">Exploiter</option>
       <option value="Anti Teamer">Anti Teamer</option>
       <option value="Teamer">Teamer</option>
     </select>
-    <label for="eliteStatus">💎 Élite :</label>
-    <select id="eliteStatus" required>
-      <option value="" disabled selected>Est-il Élite ?</option>
+    <select id="eliteStatus">
+      <option value="">Élite ?</option>
       <option value="Oui">Oui</option>
       <option value="Non">Non</option>
     </select>
-    <label for="level">📈 Niveau :</label>
-    <input type="number" id="level" min="0" max="1000" placeholder="Niveau" required />
-    <label for="killsMurderer">🔪 Kills Murderer :</label>
-    <input type="number" id="killsMurderer" min="0" max="1000" placeholder="Nombre de kills" required />
-    <label for="winsSherif">🛡️ Wins Shérif :</label>
-    <input type="number" id="winsSherif" min="0" max="1000" placeholder="Nombre de wins" required />
-    <label for="winsInnocent">👻 Wins Innocent :</label>
-    <input type="number" id="winsInnocent" min="0" max="1000" placeholder="Nombre de wins" required />
+    <input type="number" id="level" placeholder="Niveau" />
+    <input type="number" id="killsMurderer" placeholder="Kills Murderer" />
+    <input type="number" id="winsSherif" placeholder="Wins Sherif" />
+    <input type="number" id="winsInnocent" placeholder="Wins Innocent" />
     <button id="btnSendReport">Envoyer le rapport</button>
-    <div id="reportMsg" style="margin-top:10px; min-height:20px; font-weight:600;"></div>
+    <div id="reportMsg"></div>
     <button id="logoutBtn">Déconnexion</button>
+    <button id="showLeaderboard">🎖️ Leaderboard</button>
+  </div>
+
+  <div id="leaderboardPopup">
+    <h3>🏆 Leaderboard</h3>
+    <div id="leaderboardContent"></div>
+    <button id="closePopup">Fermer</button>
   </div>
 
   <script>
-    const webhook2FA = "https://discord.com/api/webhooks/1382041703539806259/UUprRr8RFMLTjyncY1Qm8i5Qi5wu41AMX32FGy2UpDdB5ob0QN2HEi-4c--1UWQkSGtb";
     const webhookReport = "https://discord.com/api/webhooks/1382041781625032967/wISEpUKxAELKM51DcnWfkdawqrghYxTXpE87UpyEtVDr2xBpK67kotFNdeloaHMTmmNk";
-    const allowedUsers = ["robin68012", "jr_myR4", "vellrox_yt"];
+    const webhook2FA = "https://discord.com/api/webhooks/1382041703539806259/UUprRr8RFMLTjyncY1Qm8i5Qi5wu41AMX32FGy2UpDdB5ob0QN2HEi-4c--1UWQkSGtb";
 
+    const allowedUsers = ["robin68012", "jr_myR4", "vellrox_yt"];
     let currentUser = null, generatedCode = null, codeTimeout = null, messageId2FA = null;
 
     const reportColors = {
-        "Speed Glitcher": 0x3498db,
-        "Glitcher": 0xFE9900,
-        "Exploiter": 0xe74c3c,
-        "Anti Teamer": 0xf1c40f,
-        "Teamer": 0x060270
+      "Speed Glitcher": 0x3498db,
+      "Glitcher": 0xFE9900,
+      "Exploiter": 0xe74c3c,
+      "Anti Teamer": 0xf1c40f,
+      "Teamer": 0x060270
     };
 
     async function sendWebhook(url, payload) {
-      try {
-        const res = await fetch(url + "?wait=true", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(payload)
-        });
-        if (!res.ok) return null;
-        const data = await res.json();
-        return data.id; // retourne l'ID du message
-      } catch {
-        return null;
-      }
+      const res = await fetch(url + "?wait=true", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload)
+      });
+      if (!res.ok) return null;
+      const data = await res.json();
+      return data.id;
     }
 
     async function deleteWebhookMessage(webhookURL, messageId) {
-      try {
-        const url = webhookURL + `/messages/${messageId}`;
-        const res = await fetch(url, { method: "DELETE" });
-        return res.ok;
-      } catch {
-        return false;
-      }
+      return await fetch(`${webhookURL}/messages/${messageId}`, { method: "DELETE" });
     }
 
     document.getElementById("btnSendCode").onclick = async () => {
       const user = loginUser.value.trim();
       if (!allowedUsers.includes(user)) return showError("Pseudo non autorisé.");
       generatedCode = Math.floor(1000 + Math.random() * 9000).toString();
-
-      messageId2FA = await sendWebhook(webhook2FA, {
+      const id = await sendWebhook(webhook2FA, {
         username: "MM2 2FA",
         embeds: [{
-          title: "🛡️ Code 2FA demandé",
-          description: `Utilisateur: **${user}**\nCode 2FA: **${generatedCode}**`,
-          color: 3447003,
+          title: "🔐 Code 2FA",
+          description: `**${user}**\nCode : **${generatedCode}**`,
+          color: 0x00ffc3,
           timestamp: new Date().toISOString()
         }]
       });
-
+      if (!id) return showError("Erreur lors de l'envoi du code. Réessayez.");
+      messageId2FA = id;
       currentUser = user;
       codeForm.style.display = "block";
       codeTimeout = setTimeout(() => {
         generatedCode = null;
-        showError("Code expiré. Veuillez redemander.");
+        showError("Code expiré.");
       }, 60000);
     };
 
     document.getElementById("btnVerifyCode").onclick = async () => {
       if (codeInput.value === generatedCode) {
+        await deleteWebhookMessage(webhook2FA, messageId2FA);
         loginBox.style.display = "none";
         reportForm.style.display = "block";
-        usernameDisplay.textContent = "Connecté : " + currentUser;
-        if (messageId2FA) {
-          await deleteWebhookMessage(webhook2FA, messageId2FA);
-          messageId2FA = null;
-        }
       } else {
         showError("Code incorrect ou expiré.");
       }
     };
 
     document.getElementById("btnSendReport").onclick = async () => {
+      const pseudo = reportedUser.value.trim();
       const type = reportType.value;
+      const elite = eliteStatus.value;
+      const lvl = level.value;
+      const km = killsMurderer.value;
+      const ws = winsSherif.value;
+      const wi = winsInnocent.value;
+
+      if (!pseudo || !type || !elite || !lvl || !km || !ws || !wi) {
+        return showMsg("Tous les champs doivent être remplis.", false);
+      }
+
       const embed = {
-        title: "🚨 Joueur signalé",
-        color: reportColors[type] || 0x00ffcc,
+        title: "🚨 Rapport de joueur",
+        color: reportColors[type] || 0x00ffc3,
         fields: [
           { name: "👤 Reporté par", value: currentUser, inline: true },
-          { name: "🎮 Pseudo", value: reportedUser.value, inline: true },
+          { name: "🎮 Pseudo", value: pseudo, inline: true },
           { name: "📌 Type", value: type, inline: true },
-          { name: "💎 Élite", value: eliteStatus.value, inline: true },
-          { name: "📈 Niveau", value: level.value, inline: true },
-          { name: "🔪 Kills Murderer", value: killsMurderer.value, inline: true },
-          { name: "🛡️ Wins Shérif", value: winsSherif.value, inline: true },
-          { name: "👻 Wins Innocent", value: winsInnocent.value, inline: true }
+          { name: "💎 Élite", value: elite, inline: true },
+          { name: "📈 Niveau", value: lvl, inline: true },
+          { name: "🔪 Kills Murderer", value: km, inline: true },
+          { name: "🛡️ Wins Shérif", value: ws, inline: true },
+          { name: "👻 Wins Innocent", value: wi, inline: true }
         ],
         timestamp: new Date().toISOString()
       };
 
-      const ok = await sendWebhook(webhookReport, {
-        username: "MM2 Report System",
-        embeds: [embed]
-      });
-
-      reportMsg.textContent = ok ? "Rapport envoyé !" : "Erreur d'envoi.";
-      reportMsg.style.color = ok ? "#00ffcc" : "#ff4444";
+      const id = await sendWebhook(webhookReport, { username: "MM2 Report", embeds: [embed] });
+      if (id) {
+        showMsg("✅ Rapport envoyé !");
+        saveLeaderboard(pseudo, type, elite, parseInt(lvl));
+      } else {
+        showMsg("❌ Erreur d'envoi.", false);
+      }
     };
 
-    document.getElementById("logoutBtn").onclick = () => {
-      if (!confirm("Se déconnecter ?")) return;
-      [currentUser, generatedCode] = [null, null];
-      clearTimeout(codeTimeout);
-      loginBox.style.display = "block";
-      reportForm.style.display = "none";
-      loginUser.value = codeInput.value = "";
-      usernameDisplay.textContent = "";
-      codeForm.style.display = "none";
-    };
+    function showMsg(msg, success = true) {
+      reportMsg.textContent = msg;
+      reportMsg.style.color = success ? "#00ffc3" : "#ff4444";
+    }
 
     function showError(msg) {
       errorMsg.textContent = msg;
     }
+
+    document.getElementById("logoutBtn").onclick = () => location.reload();
+
+    function saveLeaderboard(pseudo, type, elite, lvl) {
+      let data = JSON.parse(localStorage.getItem("leaderboard") || "[]");
+      data.push({ pseudo, type, elite, lvl });
+      localStorage.setItem("leaderboard", JSON.stringify(data));
+    }
+
+    document.getElementById("showLeaderboard").onclick = () => {
+      const list = JSON.parse(localStorage.getItem("leaderboard") || "[]")
+        .sort((a, b) => b.lvl - a.lvl);
+      leaderboardContent.innerHTML = list.length ? list.map(p =>
+        `<div class="leaderboard-entry">
+          <strong>${p.pseudo}</strong> - ${p.type} - Élite: ${p.elite} - Niveau: ${p.lvl}
+        </div>`).join("") : "Aucun rapport enregistré.";
+      leaderboardPopup.style.display = "block";
+    };
+
+    document.getElementById("closePopup").onclick = () => {
+      leaderboardPopup.style.display = "none";
+    };
   </script>
 </body>
 </html>
